@@ -1,0 +1,192 @@
+/* cool_style.css */
+body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol";
+    margin: 0;
+    padding: 0;
+    background-color: #1a1a1a; /* Dark background */
+    color: #f0f0f0; /* Light text */
+    line-height: 1.6;
+}
+
+.container {
+    width: 80%;
+    margin: auto;
+    overflow: hidden;
+    padding: 20px;
+}
+
+h1, h2, h3, h4, h5, h6 {
+    color: #e0e0e0; /* Lighter headings */
+    margin-bottom: 0.5em;
+}
+
+a {
+    color: #c792ea; /* Purple for links */
+    text-decoration: none;
+    transition: color 0.3s ease;
+}
+
+a:hover {
+    color: #ae66d4; /* Darker purple on hover */
+}
+
+button, input[type="submit"] {
+    background-color: #8e44ad; /* Purple button */
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    text-align: center;
+    text-decoration: none;
+    display: inline-block;
+    font-size: 16px;
+    border-radius: 8px; /* Rounded corners */
+    cursor: pointer;
+    transition: background-color 0.3s ease, transform 0.2s ease;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+}
+
+button:hover, input[type="submit"]:hover {
+    background-color: #732d91; /* Darker purple on hover */
+    transform: translateY(-2px); /* Slight lift effect */
+}
+
+input[type="text"],
+input[type="password"],
+input[type="email"],
+textarea {
+    width: 100%;
+    padding: 10px;
+    margin-bottom: 10px;
+    border-radius: 5px;
+    border: 1px solid #555;
+    background-color: #333;
+    color: #f0f0f0;
+    box-sizing: border-box; /* Important for 100% width */
+}
+
+input[type="text"]:focus,
+input[type="password"]:focus,
+input[type="email"]:focus,
+textarea:focus {
+    outline: none;
+    border-color: #c792ea; /* Purple border on focus */
+    box-shadow: 0 0 5px rgba(199, 146, 234, 0.5);
+}
+
+/* Basic animation for elements */
+.fade-in {
+    animation: fadeInAnimation 0.5s ease-in-out;
+}
+
+@keyframes fadeInAnimation {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+/* Navigation bar style (example) */
+nav {
+    background: #2c2c2c; /* Slightly lighter dark for nav */
+    padding: 1em 0;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.3);
+}
+
+nav ul {
+    list-style-type: none;
+    padding: 0;
+    margin: 0;
+    text-align: center;
+}
+
+nav ul li {
+    display: inline;
+    margin-right: 20px;
+}
+
+nav ul li a {
+    color: #f0f0f0;
+    font-weight: bold;
+}
+
+nav ul li a:hover {
+    color: #c792ea;
+}
+
+/* Card style (example for product listings or sections) */
+.card {
+    background: #2c2c2c;
+    border-radius: 10px;
+    padding: 20px;
+    margin-bottom: 20px;
+    box-shadow: 0 4px 8px rgba(0,0,0,0.3);
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 6px 12px rgba(0,0,0,0.4);
+}
+
+/* Specific for shopping site */
+.product-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 20px;
+}
+
+.product-item .card { /* Assuming product items use cards */
+    /* specific product item styles if needed */
+}
+
+.form-group {
+    margin-bottom: 15px;
+}
+
+.form-group label {
+    display: block;
+    margin-bottom: 5px;
+    color: #d0d0d0;
+}
+
+.error-message {
+    color: #ff6b6b; /* Red for error messages */
+    background-color: rgba(255, 107, 107, 0.1);
+    padding: 10px;
+    border-radius: 5px;
+    margin-bottom: 15px;
+    border: 1px solid #ff6b6b;
+}
+
+/* Footer style (example) */
+footer {
+    text-align: center;
+    padding: 20px;
+    margin-top: 30px;
+    background: #2c2c2c;
+    color: #aaa;
+    font-size: 0.9em;
+}
+
+
+
+
+/* Admin Action Buttons */
+.btn-admin-edit {
+    background-color: #7e57c2 !important; /* A lighter, distinct purple for edit - !important to override potential inline styles if any remain or specificty issues */
+    color: white !important;
+}
+
+.btn-admin-edit:hover {
+    background-color: #673ab7 !important; /* Darker shade for hover */
+    transform: translateY(-2px);
+}
+
+.btn-admin-delete {
+    background-color: #e53935 !important; /* A stylish red for delete */
+    color: white !important;
+}
+
+.btn-admin-delete:hover {
+    background-color: #c62828 !important; /* Darker red for hover */
+    transform: translateY(-2px);
+}
+
