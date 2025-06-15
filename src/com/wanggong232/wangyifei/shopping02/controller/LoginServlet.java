@@ -66,10 +66,10 @@ public class LoginServlet extends HttpServlet {
                 return;
             }
 
-            User user = userDao.getUserByUsername(username);
+            User user = userDao.getUserByUsername(username);//
 
             if (user != null && user.getPassword() != null && user.getPassword().equals(password)) {
-                HttpSession session = request.getSession(); // Create or get session
+                HttpSession session = request.getSession(); // 登录成功用户信息被保存到会话中
                 session.setAttribute("currentUser", user);
                 session.setAttribute("username", user.getUsername());
                 session.setAttribute("userRole", user.getRole());
@@ -95,12 +95,12 @@ public class LoginServlet extends HttpServlet {
                 session.setAttribute("cart", dbCart);
                 LOGGER.log(Level.INFO, "Cart set in session for user ID: {0}", user.getUserId());
 
-                if (user.getRole() != null && "ADMIN".equalsIgnoreCase(user.getRole())) {
+                if (user.getRole() != null && "ADMIN".equalsIgnoreCase(user.getRole())) {//定位到管理员字段。
                     LOGGER.info("Redirecting ADMIN user to dashboard.");
                     response.sendRedirect(request.getContextPath() + "/admin/dashboard.jsp");
                 } else {
                     String redirectUrl = (String) session.getAttribute("redirectAfterLogin");
-                    if (redirectUrl != null && !redirectUrl.isEmpty()) {
+                    if (redirectUrl != null && !redirectUrl.isEmpty()) {//普通用户
                         session.removeAttribute("redirectAfterLogin");
                         LOGGER.log(Level.INFO, "Redirecting user to: {0}", redirectUrl);
                         response.sendRedirect(redirectUrl);
@@ -121,4 +121,3 @@ public class LoginServlet extends HttpServlet {
         }
     }
 }
-

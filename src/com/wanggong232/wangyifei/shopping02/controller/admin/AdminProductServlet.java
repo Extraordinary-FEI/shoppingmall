@@ -1,13 +1,14 @@
 package com.wanggong232.wangyifei.shopping02.controller.admin;
 
 
+import com.wanggong232.wangyifei.shopping02.dao.ProductDao;
+import com.wanggong232.wangyifei.shopping02.model.Product;
+import com.wanggong232.wangyifei.shopping02.model.SubCategory;
+import com.wanggong232.wangyifei.shopping02.model.User;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.MultipartConfig;
 import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.http.*;
-import com.wanggong232.wangyifei.shopping02.dao.ProductDao;
-import com.wanggong232.wangyifei.shopping02.model.Product;
-import com.wanggong232.wangyifei.shopping02.model.User;
 
 import java.io.File;
 import java.io.IOException;
@@ -93,6 +94,7 @@ public class AdminProductServlet extends HttpServlet {
         }
     }
 
+
     private void listProducts(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
         List<Product> productList = productDao.getAllProducts();
         request.setAttribute("productList", productList);
@@ -125,6 +127,9 @@ public class AdminProductServlet extends HttpServlet {
     private void showNewProductForm(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
         request.setAttribute("product", new Product());
         request.setAttribute("formAction", "add");
+        // 获取所有小类别
+        List<SubCategory> subCategories = productDao.getAllSubCategories();
+        request.setAttribute("subCategories", subCategories);
         request.getRequestDispatcher("/admin/product_form.jsp").forward(request, response);
     }
 
@@ -179,7 +184,10 @@ public class AdminProductServlet extends HttpServlet {
         String priceStr = request.getParameter("price");
         String stockQuantityStr = request.getParameter("stockQuantity");
         String category = request.getParameter("category");
+        String categoryIdStr = request.getParameter("categoryId");
+        String subCategoryIdStr = request.getParameter("subCategoryId"); // 新增小类别 ID 获取
         String existingImageUrl = request.getParameter("existingImageUrl");
+
 
         Product product = new Product();
         product.setName(name);
@@ -199,8 +207,10 @@ public class AdminProductServlet extends HttpServlet {
         try {
             product.setPrice(new BigDecimal(priceStr));
             product.setStockQuantity(Integer.parseInt(stockQuantityStr));
+            product.setCategoryId(Integer.parseInt(categoryIdStr));
+            product.setSubCategoryId(Integer.parseInt(subCategoryIdStr)); // 新增小类别 ID 设置
         } catch (NumberFormatException e) {
-            request.setAttribute("errorMessage", "价格或库存数量格式无效。");
+            request.setAttribute("errorMessage", "价格、库存数量、类别 ID 或小类别 ID 格式无效。");
             request.setAttribute("product", product);
             request.setAttribute("formAction", "add");
             request.getRequestDispatcher("/admin/product_form.jsp").forward(request, response);

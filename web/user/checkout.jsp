@@ -15,7 +15,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>确认订单与支付 - 炫酷商城</title>
+    <title>确认订单与支付 - 购物商城</title>
     <link rel="stylesheet" href="${pageContext.request.contextPath}/css/cool_style.css">
     <style>
         /* Specific styles for checkout page if needed */

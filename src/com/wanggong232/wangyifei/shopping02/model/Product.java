@@ -15,9 +15,13 @@ public class Product implements Serializable {
     private int stockQuantity;
     private String imageUrl;
     private String category; // Changed back to String
+    private int categoryId; // 添加类别 ID
+    private int subCategoryId; // 添加小类别 ID
+    private String subCategoryName; // 添加小类别名称
     private Timestamp createdAt;
     private Timestamp updatedAt;
 
+    // 构造函数、Getter 和 Setter 方法
     public Product() {}
 
     // Getters
@@ -27,7 +31,10 @@ public class Product implements Serializable {
     public BigDecimal getPrice() { return price; }
     public int getStockQuantity() { return stockQuantity; }
     public String getImageUrl() { return imageUrl; }
-    public String getCategory() { return category; } // Getter for String category
+    public String getCategory() { return category; }
+    public int getCategoryId() { return categoryId; }
+    public int getSubCategoryId() { return subCategoryId; }
+    public String getSubCategoryName() { return subCategoryName; }
     public Timestamp getCreatedAt() { return createdAt; }
     public Timestamp getUpdatedAt() { return updatedAt; }
 
@@ -38,7 +45,10 @@ public class Product implements Serializable {
     public void setPrice(BigDecimal price) { this.price = price; }
     public void setStockQuantity(int stockQuantity) { this.stockQuantity = stockQuantity; }
     public void setImageUrl(String imageUrl) { this.imageUrl = imageUrl; }
-    public void setCategory(String category) { this.category = category; } // Setter for String category
+    public void setCategory(String category) { this.category = category; }
+    public void setCategoryId(int categoryId) { this.categoryId = categoryId; }
+    public void setSubCategoryId(int subCategoryId) { this.subCategoryId = subCategoryId; }
+    public void setSubCategoryName(String subCategoryName) { this.subCategoryName = subCategoryName; }
     public void setCreatedAt(Timestamp createdAt) { this.createdAt = createdAt; }
     public void setUpdatedAt(Timestamp updatedAt) { this.updatedAt = updatedAt; }
 }

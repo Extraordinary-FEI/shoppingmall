@@ -7,7 +7,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>我的订单 - 炫酷商城</title>
+    <title>我的订单 - 购物商城</title>
     <link rel="stylesheet" href="${pageContext.request.contextPath}/css/cool_style.css">
     <style>
         .order-history-table {

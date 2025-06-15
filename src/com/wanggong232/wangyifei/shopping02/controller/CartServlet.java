@@ -99,7 +99,7 @@ public class CartServlet extends HttpServlet {
             return;
         }
 
-        Product product = productDao.getProductById(productId);
+        Product product = productDao.getProductById(productId);//
         if (product == null) {
             session.setAttribute("cartError", "商品不存在。");
             return;
@@ -110,7 +110,7 @@ public class CartServlet extends HttpServlet {
             if (currentUser != null) {
                 CartItem itemInCart = cart.getItems().get(productId);
                 if (itemInCart != null) {
-                    cartDao.saveOrUpdateCartItem(currentUser.getUserId(), productId, itemInCart.getQuantity());
+                    cartDao.saveOrUpdateCartItem(currentUser.getUserId(), productId, itemInCart.getQuantity());//
                     session.setAttribute("cartMessage", "商品 '" + product.getName() + "' 已成功添加到购物车！");
                 }
             } else {
