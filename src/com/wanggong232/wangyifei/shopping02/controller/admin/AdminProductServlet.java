@@ -2,6 +2,7 @@ package com.wanggong232.wangyifei.shopping02.controller.admin;
 
 
 import com.wanggong232.wangyifei.shopping02.dao.ProductDao;
+import com.wanggong232.wangyifei.shopping02.model.Category;
 import com.wanggong232.wangyifei.shopping02.model.Product;
 import com.wanggong232.wangyifei.shopping02.model.SubCategory;
 import com.wanggong232.wangyifei.shopping02.model.User;
@@ -94,7 +95,6 @@ public class AdminProductServlet extends HttpServlet {
         }
     }
 
-
     private void listProducts(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
         List<Product> productList = productDao.getAllProducts();
         request.setAttribute("productList", productList);
@@ -110,7 +110,6 @@ public class AdminProductServlet extends HttpServlet {
         }
         request.getRequestDispatcher("/admin/product_list.jsp").forward(request, response);
     }
-
     private void searchProducts(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
         String searchTerm = request.getParameter("searchTerm");
         List<Product> productList;
@@ -123,16 +122,13 @@ public class AdminProductServlet extends HttpServlet {
         request.setAttribute("productList", productList);
         request.getRequestDispatcher("/admin/product_list.jsp").forward(request, response);
     }
-
     private void showNewProductForm(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
         request.setAttribute("product", new Product());
         request.setAttribute("formAction", "add");
-        // 获取所有小类别
-        List<SubCategory> subCategories = productDao.getAllSubCategories();
-        request.setAttribute("subCategories", subCategories);
+        List<Category> categories = productDao.getAllCategories();
+        request.setAttribute("categories", categories);
         request.getRequestDispatcher("/admin/product_form.jsp").forward(request, response);
     }
-
     private void showEditProductForm(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
         try {
             int productId = Integer.parseInt(request.getParameter("productId"));
@@ -140,6 +136,8 @@ public class AdminProductServlet extends HttpServlet {
             if (existingProduct != null) {
                 request.setAttribute("product", existingProduct);
                 request.setAttribute("formAction", "edit");
+                List<Category> categories = productDao.getAllCategories();
+                request.setAttribute("categories", categories);
                 request.getRequestDispatcher("/admin/product_form.jsp").forward(request, response);
             } else {
                 request.getSession().setAttribute("errorMessage", "未找到ID为 " + productId + " 的商品");
@@ -150,7 +148,6 @@ public class AdminProductServlet extends HttpServlet {
             response.sendRedirect(request.getContextPath() + "/admin/products");
         }
     }
-
     private String uploadFile(HttpServletRequest request, Part filePart) throws IOException {
         String fileName = Paths.get(filePart.getSubmittedFileName()).getFileName().toString(); // MSIE fix.
         if (fileName == null || fileName.isEmpty()) {
@@ -177,22 +174,18 @@ public class AdminProductServlet extends HttpServlet {
         }
         return UPLOAD_DIR + "/" + newFileName; // Return relative path for web access
     }
-
     private void insertProduct(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
         String name = request.getParameter("name");
         String description = request.getParameter("description");
         String priceStr = request.getParameter("price");
         String stockQuantityStr = request.getParameter("stockQuantity");
-        String category = request.getParameter("category");
         String categoryIdStr = request.getParameter("categoryId");
-        String subCategoryIdStr = request.getParameter("subCategoryId"); // 新增小类别 ID 获取
+        String subCategoryIdStr = request.getParameter("subCategoryId");
         String existingImageUrl = request.getParameter("existingImageUrl");
-
 
         Product product = new Product();
         product.setName(name);
         product.setDescription(description);
-        product.setCategory(category);
         product.setImageUrl(existingImageUrl); // Set existing first, override if new file uploaded
 
         // Basic Validation
@@ -207,15 +200,42 @@ public class AdminProductServlet extends HttpServlet {
         try {
             product.setPrice(new BigDecimal(priceStr));
             product.setStockQuantity(Integer.parseInt(stockQuantityStr));
-            product.setCategoryId(Integer.parseInt(categoryIdStr));
-            product.setSubCategoryId(Integer.parseInt(subCategoryIdStr)); // 新增小类别 ID 设置
         } catch (NumberFormatException e) {
-            request.setAttribute("errorMessage", "价格、库存数量、类别 ID 或小类别 ID 格式无效。");
+            request.setAttribute("errorMessage", "价格或库存数量格式无效。");
             request.setAttribute("product", product);
             request.setAttribute("formAction", "add");
             request.getRequestDispatcher("/admin/product_form.jsp").forward(request, response);
             return;
         }
+
+        if (categoryIdStr == null || categoryIdStr.trim().isEmpty() || subCategoryIdStr == null || subCategoryIdStr.trim().isEmpty()) {
+            request.setAttribute("errorMessage", "请选择正确的商品分类。");
+            request.setAttribute("product", product);
+            request.setAttribute("formAction", "add");
+            request.getRequestDispatcher("/admin/product_form.jsp").forward(request, response);
+            return;
+        }
+
+        int categoryId = Integer.parseInt(categoryIdStr);
+        int subCategoryId = Integer.parseInt(subCategoryIdStr);
+        List<SubCategory> subCategories = productDao.getSubCategories(categoryId);
+        boolean isValidSubCategory = false;
+        for (SubCategory subCategory : subCategories) {
+            if (subCategory.getSubCategoryId() == subCategoryId) {
+                isValidSubCategory = true;
+                break;
+            }
+        }
+        if (!isValidSubCategory) {
+            request.setAttribute("errorMessage", "请选择正确的商品分类。");
+            request.setAttribute("product", product);
+            request.setAttribute("formAction", "add");
+            request.getRequestDispatcher("/admin/product_form.jsp").forward(request, response);
+            return;
+        }
+
+        product.setCategoryId(categoryId);
+        product.setSubCategoryId(subCategoryId);
 
         Part filePart = request.getPart("imageFile");
         String uploadedFilePath = null;
@@ -244,103 +264,116 @@ public class AdminProductServlet extends HttpServlet {
             request.getRequestDispatcher("/admin/product_form.jsp").forward(request, response);
         }
     }
-
     private void updateProduct(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
+        int productId = Integer.parseInt(request.getParameter("productId"));
+        String name = request.getParameter("name");
+        String description = request.getParameter("description");
+        String priceStr = request.getParameter("price");
+        String stockQuantityStr = request.getParameter("stockQuantity");
+        String newCategoryName = request.getParameter("newCategoryName");
+        String newSubCategoryName = request.getParameter("newSubCategoryName");
+        String existingImageUrl = request.getParameter("existingImageUrl");
+
+        Product product = productDao.getProductById(productId);
+        product.setName(name);
+        product.setDescription(description);
+        product.setImageUrl(existingImageUrl); // Set existing first, override if new file uploaded
+
+        // Basic Validation
+        if (name == null || name.trim().isEmpty() || priceStr == null || priceStr.trim().isEmpty() || stockQuantityStr == null || stockQuantityStr.trim().isEmpty()) {
+            request.setAttribute("errorMessage", "商品名称、价格和库存不能为空。");
+            request.setAttribute("product", product); // Repopulate form with entered data
+            request.setAttribute("formAction", "edit");
+            request.getRequestDispatcher("/admin/product_form.jsp").forward(request, response);
+            return;
+        }
+
         try {
-            int productId = Integer.parseInt(request.getParameter("productId"));
-            String name = request.getParameter("name");
-            String description = request.getParameter("description");
-            String priceStr = request.getParameter("price");
-            String stockQuantityStr = request.getParameter("stockQuantity");
-            String category = request.getParameter("category");
-            String existingImageUrl = request.getParameter("existingImageUrl"); // Current image path
+            product.setPrice(new BigDecimal(priceStr));
+            product.setStockQuantity(Integer.parseInt(stockQuantityStr));
+        } catch (NumberFormatException e) {
+            request.setAttribute("errorMessage", "价格或库存数量格式无效。");
+            request.setAttribute("product", product);
+            request.setAttribute("formAction", "edit");
+            request.getRequestDispatcher("/admin/product_form.jsp").forward(request, response);
+            return;
+        }
 
-            Product product = productDao.getProductById(productId);
-            if (product == null) {
-                request.getSession().setAttribute("errorMessage", "尝试更新的商品不存在。");
-                response.sendRedirect(request.getContextPath() + "/admin/products");
-                return;
-            }
-
-            // Set product fields for repopulation in case of error
-            product.setName(name);
-            product.setDescription(description);
-            product.setCategory(category);
-            // Don't clear existing image URL unless a new one is successfully uploaded
-            if(existingImageUrl != null && !existingImageUrl.isEmpty()) product.setImageUrl(existingImageUrl);
-
-            if (name == null || name.trim().isEmpty() || priceStr == null || priceStr.trim().isEmpty() || stockQuantityStr == null || stockQuantityStr.trim().isEmpty()) {
-                request.setAttribute("errorMessage", "商品名称、价格和库存不能为空。");
-                request.setAttribute("product", product);
-                request.setAttribute("formAction", "edit");
-                request.getRequestDispatcher("/admin/product_form.jsp").forward(request, response);
-                return;
-            }
-
-            try {
-                product.setPrice(new BigDecimal(priceStr));
-                product.setStockQuantity(Integer.parseInt(stockQuantityStr));
-            } catch (NumberFormatException e) {
-                request.setAttribute("errorMessage", "价格或库存数量格式无效。");
-                request.setAttribute("product", product);
-                request.setAttribute("formAction", "edit");
-                request.getRequestDispatcher("/admin/product_form.jsp").forward(request, response);
-                return;
-            }
-
-            Part filePart = request.getPart("imageFile");
-            String uploadedFilePath = null;
-            if (filePart != null && filePart.getSize() > 0) {
-                try {
-                    // Optionally: delete old image if a new one is uploaded and names are different
-                    // String oldImagePath = product.getImageUrl();
-                    uploadedFilePath = uploadFile(request, filePart);
-                    if (uploadedFilePath != null) {
-                        product.setImageUrl(uploadedFilePath);
-                        // if (oldImagePath != null && !oldImagePath.equals(uploadedFilePath)) { /* delete old file logic */ }
-                    }
-                } catch (IOException e) {
-                    request.setAttribute("errorMessage", "图片上传失败: " + e.getMessage());
+        if (newCategoryName != null && !newCategoryName.trim().isEmpty() && newSubCategoryName != null && !newSubCategoryName.trim().isEmpty()) {
+            int categoryId = productDao.addCategory(newCategoryName);
+            if (categoryId != -1) {
+                int subCategoryId = productDao.addSubCategory(categoryId, newSubCategoryName);
+                if (subCategoryId != -1) {
+                    product.setCategoryId(categoryId);
+                    product.setSubCategoryId(subCategoryId);
+                } else {
+                    request.setAttribute("errorMessage", "新建子类失败，请检查数据。");
                     request.setAttribute("product", product);
                     request.setAttribute("formAction", "edit");
                     request.getRequestDispatcher("/admin/product_form.jsp").forward(request, response);
                     return;
                 }
-            } else if (request.getParameter("removeImage") != null && request.getParameter("removeImage").equals("true")) {
-                // Logic to remove image if a checkbox or similar is used
-                // String oldImagePath = product.getImageUrl();
-                product.setImageUrl(null); // Set to null or default image path
-                // if (oldImagePath != null) { /* delete old file logic */ }
-            }
-
-            if (productDao.updateProduct(product)) {
-                request.getSession().setAttribute("message", "商品 \"" + name + "\" 更新成功！");
-                response.sendRedirect(request.getContextPath() + "/admin/products");
             } else {
-                request.setAttribute("errorMessage", "更新商品失败。");
+                request.setAttribute("errorMessage", "新建大类失败，请检查数据。");
                 request.setAttribute("product", product);
                 request.setAttribute("formAction", "edit");
                 request.getRequestDispatcher("/admin/product_form.jsp").forward(request, response);
+                return;
             }
-        } catch (NumberFormatException e) {
-            request.getSession().setAttribute("errorMessage", "无效的商品ID格式。");
+        } else if (newCategoryName != null && !newCategoryName.trim().isEmpty() || newSubCategoryName != null && !newSubCategoryName.trim().isEmpty()) {
+            request.setAttribute("errorMessage", "必须同时新建大类和子类。");
+            request.setAttribute("product", product);
+            request.setAttribute("formAction", "edit");
+            request.getRequestDispatcher("/admin/product_form.jsp").forward(request, response);
+            return;
+        } else {
+            String categoryIdStr = request.getParameter("categoryId");
+            String subCategoryIdStr = request.getParameter("subCategoryId");
+            if (categoryIdStr != null && !categoryIdStr.trim().isEmpty() && subCategoryIdStr != null && !subCategoryIdStr.trim().isEmpty()) {
+                int categoryId = Integer.parseInt(categoryIdStr);
+                int subCategoryId = Integer.parseInt(subCategoryIdStr);
+                product.setCategoryId(categoryId);
+                product.setSubCategoryId(subCategoryId);
+            }
+        }
+
+        Part filePart = request.getPart("imageFile");
+        String uploadedFilePath = null;
+        if (filePart != null && filePart.getSize() > 0) {
+            try {
+                uploadedFilePath = uploadFile(request, filePart);
+                if (uploadedFilePath != null) {
+                    product.setImageUrl(uploadedFilePath);
+                }
+            } catch (IOException e) {
+                request.setAttribute("errorMessage", "图片上传失败: " + e.getMessage());
+                request.setAttribute("product", product);
+                request.setAttribute("formAction", "edit");
+                request.getRequestDispatcher("/admin/product_form.jsp").forward(request, response);
+                return;
+            }
+        }
+
+        if (productDao.updateProduct(product)) {
+            request.getSession().setAttribute("message", "商品 \"" + name + "\" 更新成功！");
             response.sendRedirect(request.getContextPath() + "/admin/products");
+        } else {
+            request.setAttribute("errorMessage", "更新商品失败，请检查数据。");
+            request.setAttribute("product", product);
+            request.setAttribute("formAction", "edit");
+            request.getRequestDispatcher("/admin/product_form.jsp").forward(request, response);
         }
     }
-
     private void deleteProduct(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
         try {
             int productId = Integer.parseInt(request.getParameter("productId"));
-            // Optionally: delete product image from server before deleting product record
-            // Product product = productDao.getProductById(productId);
-            // if (product != null && product.getImageUrl() != null) { /* delete file logic */ }
             if (productDao.deleteProduct(productId)) {
-                request.getSession().setAttribute("message", "商品ID " + productId + " 删除成功！");
+                request.getSession().setAttribute("message", "商品删除成功！");
             } else {
-                request.getSession().setAttribute("errorMessage", "删除商品ID " + productId + " 失败 (可能因为订单关联等)。");
+                request.getSession().setAttribute("errorMessage", "删除商品失败，请检查数据。");
             }
         } catch (NumberFormatException e) {
-            request.getSession().setAttribute("errorMessage", "无效的商品ID格式。");
+            request.getSession().setAttribute("errorMessage", "无效的商品ID格式");
         }
         response.sendRedirect(request.getContextPath() + "/admin/products");
     }

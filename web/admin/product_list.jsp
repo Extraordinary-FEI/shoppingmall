@@ -236,7 +236,7 @@
                                     <td><fmt:formatDate value="${product.createdAt}" pattern="yyyy-MM-dd HH:mm"/></td>
                                     <td>
                                         <a href="${pageContext.request.contextPath}/admin/products?action=edit&productId=${product.productId}" class="button btn-admin-action btn-admin-edit">编辑</a>
-                                        <a href="${pageContext.request.contextPath}/admin/products?action=delete&productId=${product.productId}" 
+                                        <a href="${pageContext.request.contextPath}/admin/products?action=delete&productId=${product.productId}"
                                            class="button btn-admin-action btn-admin-delete"
                                            onclick="return confirm('确定要删除商品 \'${product.name}\' 吗?');">删除</a>
                                     </td>

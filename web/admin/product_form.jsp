@@ -9,12 +9,17 @@
     <c:redirect url="${pageContext.request.contextPath}/user/login.jsp?error=AdminAccessRequired"/>
 </c:if>
 
+<%-- Set the formAction from request parameter if not already set --%>
+<c:if test="${empty formAction}">
+    <c:set var="formAction" value="${param.formAction}" />
+</c:if>
+
 <!DOCTYPE html>
 <html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>添加新商品 - 炫酷商城后台</title>
+    <title>${formAction == 'edit' ? '编辑商品' : '添加新商品'} - 炫酷商城后台</title>
     <link rel="stylesheet" href="${pageContext.request.contextPath}/css/cool_style.css">
     <style>
         body {
@@ -156,6 +161,43 @@
         }
         .form-row .form-group {
             flex: 1;
+        }
+
+        /* 新增分类相关样式 */
+        .category-section {
+            background-color: #2a2a2a;
+            border: 1px solid #555;
+            border-radius: 8px;
+            padding: 20px;
+            margin-top: 10px;
+        }
+        .category-toggle {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+        .category-toggle input[type="checkbox"] {
+            width: auto;
+            margin: 0;
+        }
+        .category-toggle label {
+            margin: 0;
+            color: #c792ea;
+            font-weight: bold;
+            cursor: pointer;
+        }
+        .new-category-fields {
+            display: none;
+            margin-top: 15px;
+        }
+        .new-category-fields.show {
+            display: block;
+        }
+        .category-hint {
+            color: #aaa;
+            font-size: 0.9em;
+            margin-top: 5px;
         }
 
         /* 图片上传相关样式 */
@@ -333,7 +375,7 @@
 
 <div class="main-content">
     <header class="admin-header">
-        <h1>✨ 添加新商品</h1>
+        <h1>✨ ${formAction == 'edit' ? '编辑商品' : '添加新商品'}</h1>
         <div class="user-info">
             <span>管理员: ${sessionScope.currentUser.username} | <a href="${pageContext.request.contextPath}/login?action=logout">退出</a></span>
         </div>
@@ -341,7 +383,7 @@
 
     <div class="content-area">
         <div class="form-container">
-            <h2>📝 填写商品信息</h2>
+            <h2>📝 ${formAction == 'edit' ? '修改商品信息' : '填写商品信息'}</h2>
 
             <c:if test="${not empty errorMessage}">
                 <div class="alert-cool danger">${errorMessage}</div>
@@ -351,56 +393,99 @@
                 <div class="alert-cool success">${successMessage}</div>
             </c:if>
 
-            <form action="addProduct.jsp" method="post" enctype="multipart/form-data" id="productForm">
+            <form action="${pageContext.request.contextPath}/admin/products" method="post" enctype="multipart/form-data" id="productForm">
+                <input type="hidden" name="action" value="${formAction == 'edit' ? 'edit' : 'add'}">
+                <c:if test="${formAction == 'edit'}">
+                    <input type="hidden" name="productId" value="${product.productId}">
+                    <input type="hidden" name="existingImageUrl" value="${product.imageUrl}">
+                </c:if>
+
                 <div class="form-group">
                     <label for="name">🏷️ 商品名称:</label>
-                    <input type="text" id="name" name="name" placeholder="请输入商品名称" required>
+                    <input type="text" id="name" name="name" value="<c:out value='${product.name}'/>" placeholder="请输入商品名称" required>
                 </div>
 
                 <div class="form-group">
                     <label for="description">📝 商品描述:</label>
-                    <textarea id="description" name="description" placeholder="请详细描述商品特点和功能" required></textarea>
-                </div>
-
-                <div class="form-row">
-                    <div class="form-group">
-                        <label for="category">📂 商品大分类:</label>
-                        <select id="category" name="categoryId" onchange="loadSubCategories()" required>
-                            <option value="">请选择大分类</option>
-                            <%
-                                try {
-                                    ProductDao productDao = new ProductDao();
-                                    List<Category> categories = productDao.getAllCategories();
-                                    for (Category category : categories) {
-                            %>
-                            <option value="<%= category.getCategoryId() %>"><%= category.getCategoryName() %></option>
-                            <%
-                                    }
-                                } catch (Exception e) {
-                                    out.println("<option value=''>加载分类失败</option>");
-                                }
-                            %>
-                        </select>
-                    </div>
-
-                    <div class="form-group">
-                        <label for="subCategory">🏷️ 商品小分类:</label>
-                        <select id="subCategory" name="subCategoryId" required>
-                            <option value="">请先选择大分类</option>
-                        </select>
-                        <div class="loading-indicator" id="loadingIndicator">正在加载小分类...</div>
-                    </div>
+                    <textarea id="description" name="description" placeholder="请详细描述商品特点和功能" required><c:out value='${product.description}'/></textarea>
                 </div>
 
                 <div class="form-row">
                     <div class="form-group">
                         <label for="price">💰 商品价格 (元):</label>
-                        <input type="number" id="price" name="price" step="0.01" min="0.01" placeholder="0.00" required>
+                        <input type="number" id="price" name="price" step="0.01" min="0.01" value="${product.price}" placeholder="0.00" required>
                     </div>
 
                     <div class="form-group">
                         <label for="stockQuantity">📦 库存数量:</label>
-                        <input type="number" id="stockQuantity" name="stockQuantity" min="0" placeholder="0" required>
+                        <input type="number" id="stockQuantity" name="stockQuantity" min="0" value="${product.stockQuantity}" placeholder="0" required>
+                    </div>
+                </div>
+
+                <!-- 分类选择区域 -->
+                <div class="form-group">
+                    <label>📂 商品分类:</label>
+                    <div class="category-section">
+                        <!-- 现有分类选择 -->
+                        <div id="existingCategorySection">
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label for="category">商品大分类:</label>
+                                    <select id="category" name="categoryId" onchange="loadSubCategories()">
+                                        <option value="">请选择大分类</option>
+                                        <%
+                                            try {
+                                                ProductDao productDao = new ProductDao();
+                                                List<Category> categories = productDao.getAllCategories();
+                                                for (Category category : categories) {
+                                        %>
+                                        <option value="<%= category.getCategoryId() %>"
+                                        ${product.categoryId == category.getCategoryId() ? 'selected' : ''}>
+                                            <%= category.getCategoryName() %>
+                                        </option>
+                                        <%
+                                                }
+                                            } catch (Exception e) {
+                                                out.println("<option value=''>加载分类失败</option>");
+                                            }
+                                        %>
+                                    </select>
+                                </div>
+
+                                <div class="form-group">
+                                    <label for="subCategory">🏷️ 商品小分类:</label>
+                                    <select id="subCategory" name="subCategoryId">
+                                        <option value="">请先选择大分类</option>
+                                    </select>
+                                    <div class="loading-indicator" id="loadingIndicator">正在加载小分类...</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- 新建分类选项 (仅在编辑时显示) -->
+                        <c:if test="${formAction == 'edit'}">
+                            <div class="category-toggle">
+                                <input type="checkbox" id="createNewCategory" onchange="toggleNewCategoryFields()">
+                                <label for="createNewCategory">创建新的大类和子类</label>
+                            </div>
+
+                            <div class="new-category-fields" id="newCategoryFields">
+                                <div class="form-row">
+                                    <div class="form-group">
+                                        <label for="newCategoryName">新大类名称:</label>
+                                        <input type="text" id="newCategoryName" name="newCategoryName" placeholder="输入新的大类名称">
+                                        <div class="category-hint">创建新的商品大分类</div>
+                                    </div>
+
+                                    <div class="form-group">
+                                        <label for="newSubCategoryName">新子类名称:</label>
+                                        <input type="text" id="newSubCategoryName" name="newSubCategoryName" placeholder="输入新的子类名称">
+                                        <div class="category-hint">在新大类下创建子分类</div>
+                                    </div>
+                                </div>
+                                <div class="category-hint">注意：必须同时填写大类和子类名称才能创建新分类</div>
+                            </div>
+                        </c:if>
                     </div>
                 </div>
 
@@ -422,19 +507,21 @@
 
                             <div class="upload-option">
                                 <h4>🔗 图片路径</h4>
-                                <input type="text" id="imageUrl" name="imageUrl" placeholder="例如: images/products/product1.jpg" onchange="previewImageUrl(this)">
+                                <input type="text" id="imageUrl" name="imageUrl" value="<c:out value='${product.imageUrl}'/>" placeholder="例如: images/products/product1.jpg" onchange="previewImageUrl(this)">
                                 <div class="upload-hint">输入相对于网站根目录的图片路径</div>
                             </div>
                         </div>
 
-                        <div class="image-preview" id="imagePreview" style="display: none;">
+                        <div class="image-preview" id="imagePreview" style="${not empty product.imageUrl ? 'display: block;' : 'display: none;'}">
                             <h4 style="color: #c792ea; margin-bottom: 10px;">📷 图片预览:</h4>
-                            <img id="previewImg" src="/placeholder.svg" alt="图片预览">
+                            <img id="previewImg" src="${not empty product.imageUrl ? pageContext.request.contextPath.concat('/').concat(product.imageUrl) : '/placeholder.svg'}" alt="图片预览">
                         </div>
                     </div>
                 </div>
 
-                <button type="submit" class="submit-btn">✅ 添加商品</button>
+                <button type="submit" class="submit-btn">
+                    ✅ ${formAction == 'edit' ? '保存修改' : '添加商品'}
+                </button>
                 <a href="${pageContext.request.contextPath}/admin/products" class="btn-cancel">❌ 取消操作</a>
             </form>
         </div>
@@ -442,7 +529,23 @@
 </div>
 
 <script>
-    function loadSubCategories() {
+    // 页面加载时初始化
+    document.addEventListener('DOMContentLoaded', function() {
+        // 如果是编辑模式且已有分类，加载对应的子分类
+        <c:if test="${formAction == 'edit' && not empty product.categoryId}">
+        loadSubCategories(${product.subCategoryId});
+        </c:if>
+
+        // 为数字输入框添加格式化
+        var priceInput = document.getElementById('price');
+        priceInput.addEventListener('blur', function() {
+            if (this.value) {
+                this.value = parseFloat(this.value).toFixed(2);
+            }
+        });
+    });
+
+    function loadSubCategories(selectedSubCategoryId) {
         var categoryId = document.getElementById("category").value;
         var subCategorySelect = document.getElementById("subCategory");
         var loadingIndicator = document.getElementById("loadingIndicator");
@@ -476,6 +579,12 @@
                             var option = document.createElement("option");
                             option.value = subCategories[i].subCategoryId;
                             option.text = subCategories[i].subCategoryName;
+
+                            // 如果是编辑模式，选中对应的子分类
+                            if (selectedSubCategoryId && subCategories[i].subCategoryId == selectedSubCategoryId) {
+                                option.selected = true;
+                            }
+
                             subCategorySelect.add(option);
                         }
 
@@ -497,6 +606,30 @@
             subCategorySelect.innerHTML = '<option value="">网络错误，请重试</option>';
         };
         xhr.send();
+    }
+
+    // 切换新建分类字段显示/隐藏
+    function toggleNewCategoryFields() {
+        var checkbox = document.getElementById('createNewCategory');
+        var newCategoryFields = document.getElementById('newCategoryFields');
+        var existingCategorySection = document.getElementById('existingCategorySection');
+
+        if (checkbox.checked) {
+            newCategoryFields.classList.add('show');
+            existingCategorySection.style.opacity = '0.5';
+            // 禁用现有分类选择
+            document.getElementById('category').disabled = true;
+            document.getElementById('subCategory').disabled = true;
+        } else {
+            newCategoryFields.classList.remove('show');
+            existingCategorySection.style.opacity = '1';
+            // 启用现有分类选择
+            document.getElementById('category').disabled = false;
+            document.getElementById('subCategory').disabled = false;
+            // 清空新建分类字段
+            document.getElementById('newCategoryName').value = '';
+            document.getElementById('newSubCategoryName').value = '';
+        }
     }
 
     // 预览上传的图片
@@ -546,21 +679,42 @@
 
     // 表单提交前验证
     document.getElementById('productForm').addEventListener('submit', function(e) {
+        var createNewCategory = document.getElementById('createNewCategory');
         var categoryId = document.getElementById('category').value;
         var subCategoryId = document.getElementById('subCategory').value;
+        var newCategoryName = document.getElementById('newCategoryName');
+        var newSubCategoryName = document.getElementById('newSubCategoryName');
         var imageFile = document.getElementById('imageFile').files[0];
         var imageUrl = document.getElementById('imageUrl').value.trim();
 
-        if (!categoryId) {
-            alert('请选择商品大分类！');
-            e.preventDefault();
-            return false;
-        }
+        // 检查分类选择
+        if (createNewCategory && createNewCategory.checked) {
+            // 新建分类模式
+            if (!newCategoryName.value.trim() || !newSubCategoryName.value.trim()) {
+                alert('请填写完整的新大类和子类名称！');
+                e.preventDefault();
+                return false;
+            }
+        } else {
+            // 现有分类模式
+            if (!categoryId) {
+                alert('请选择商品大分类！');
+                e.preventDefault();
+                return false;
+            }
 
-        if (!subCategoryId) {
-            alert('请选择商品小分类！');
-            e.preventDefault();
-            return false;
+            if (!subCategoryId) {
+                alert('请选择商品小分类！');
+                e.preventDefault();
+                return false;
+            }
+
+            // 验证分类层级关系
+            if (!validateCategoryHierarchy(categoryId, subCategoryId)) {
+                alert('所选的子分类不属于选定的大分类，请重新选择！');
+                e.preventDefault();
+                return false;
+            }
         }
 
         if (!imageFile && !imageUrl) {
@@ -571,20 +725,30 @@
 
         // 显示提交中状态
         var submitBtn = document.querySelector('.submit-btn');
-        submitBtn.innerHTML = '⏳ 正在添加...';
+        submitBtn.innerHTML = '⏳ 正在处理...';
         submitBtn.disabled = true;
     });
 
-    // 页面加载完成后的初始化
-    document.addEventListener('DOMContentLoaded', function() {
-        // 为数字输入框添加格式化
-        var priceInput = document.getElementById('price');
-        priceInput.addEventListener('blur', function() {
-            if (this.value) {
-                this.value = parseFloat(this.value).toFixed(2);
+    // 验证分类层级关系
+    function validateCategoryHierarchy(categoryId, subCategoryId) {
+        // 通过AJAX验证分类层级关系
+        var xhr = new XMLHttpRequest();
+        xhr.open("GET", "getSubCategories.jsp?categoryId=" + categoryId, false); // 同步请求
+        try {
+            xhr.send();
+            if (xhr.status == 200) {
+                var subCategories = JSON.parse(xhr.responseText);
+                for (var i = 0; i < subCategories.length; i++) {
+                    if (subCategories[i].subCategoryId == subCategoryId) {
+                        return true;
+                    }
+                }
             }
-        });
-    });
+        } catch (e) {
+            console.error('验证分类层级失败:', e);
+        }
+        return false;
+    }
 </script>
 </body>
 </html>
