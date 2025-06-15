@@ -15,7 +15,7 @@ public class ProductDao {
 
     public List<Product> getAllProducts() {
         List<Product> products = new ArrayList<>();
-        String sql = "SELECT * FROM products ORDER BY product_id, category ASC, name ASC"; // Added sorting for consistency
+        String sql = "SELECT * FROM products ORDER BY product_id, category ASC, name ASC";
         try (Connection connection = DBConnectionUtil.getConnection();
              Statement statement = connection.createStatement();
              ResultSet rs = statement.executeQuery(sql)) {
@@ -23,10 +23,11 @@ public class ProductDao {
                 products.add(mapRowToProduct(rs));
             }
         } catch (SQLException e) {
-            e.printStackTrace(); // Proper logging should be implemented
+            e.printStackTrace();
         }
         return products;
     }
+
 
     public List<Product> getProductsByCategory(String category) {
         List<Product> products = new ArrayList<>();
@@ -123,18 +124,17 @@ public class ProductDao {
         }
         return subCategories;
     }
+    // 获取所有大类
     public List<Category> getAllCategories() {
         List<Category> categories = new ArrayList<>();
         String sql = "SELECT * FROM categories";
         try (Connection connection = DBConnectionUtil.getConnection();
-             PreparedStatement preparedStatement = connection.prepareStatement(sql);
-             ResultSet rs = preparedStatement.executeQuery()) {
+             Statement statement = connection.createStatement();
+             ResultSet rs = statement.executeQuery(sql)) {
             while (rs.next()) {
                 Category category = new Category();
                 category.setCategoryId(rs.getInt("category_id"));
                 category.setCategoryName(rs.getString("category_name"));
-                category.setCreatedAt(rs.getTimestamp("created_at"));
-                category.setUpdatedAt(rs.getTimestamp("updated_at"));
                 categories.add(category);
             }
         } catch (SQLException e) {
@@ -142,6 +142,71 @@ public class ProductDao {
         }
         return categories;
     }
+
+    // 新增大类
+    public int addCategory(String categoryName) {
+        String sql = "INSERT INTO categories (category_name) VALUES (?)";
+        try (Connection connection = DBConnectionUtil.getConnection();
+             PreparedStatement preparedStatement = connection.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
+            preparedStatement.setString(1, categoryName);
+            int affectedRows = preparedStatement.executeUpdate();
+            if (affectedRows > 0) {
+                try (ResultSet generatedKeys = preparedStatement.getGeneratedKeys()) {
+                    if (generatedKeys.next()) {
+                        return generatedKeys.getInt(1);
+                    }
+                }
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return -1;
+    }
+
+
+    // 新增子类
+    public int addSubCategory(int categoryId, String subCategoryName) {
+        String sql = "INSERT INTO sub_categories (category_id, sub_category_name) VALUES (?, ?)";
+        try (Connection connection = DBConnectionUtil.getConnection();
+             PreparedStatement preparedStatement = connection.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
+            preparedStatement.setInt(1, categoryId);
+            preparedStatement.setString(2, subCategoryName);
+            int affectedRows = preparedStatement.executeUpdate();
+            if (affectedRows > 0) {
+                try (ResultSet generatedKeys = preparedStatement.getGeneratedKeys()) {
+                    if (generatedKeys.next()) {
+                        return generatedKeys.getInt(1);
+                    }
+                }
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return -1;
+    }
+
+    // 获取某个大类下的所有子类
+    public List<SubCategory> getSubCategories(int categoryId) {
+        List<SubCategory> subCategories = new ArrayList<>();
+        String sql = "SELECT * FROM sub_categories WHERE category_id = ?";
+        try (Connection connection = DBConnectionUtil.getConnection();
+             PreparedStatement preparedStatement = connection.prepareStatement(sql)) {
+            preparedStatement.setInt(1, categoryId);
+            try (ResultSet rs = preparedStatement.executeQuery()) {
+                while (rs.next()) {
+                    SubCategory subCategory = new SubCategory();
+                    subCategory.setSubCategoryId(rs.getInt("sub_category_id"));
+                    subCategory.setCategoryId(rs.getInt("category_id"));
+                    subCategory.setSubCategoryName(rs.getString("sub_category_name"));
+                    subCategories.add(subCategory);
+                }
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return subCategories;
+    }
+
     public List<SubCategory> getSubCategoriesByCategoryId(int categoryId) {
         List<SubCategory> subCategories = new ArrayList<>();
         String sql = "SELECT * FROM sub_categories WHERE category_id = ?";
@@ -323,8 +388,8 @@ public class ProductDao {
         product.setDescription(rs.getString("description"));
         product.setPrice(rs.getBigDecimal("price"));
         product.setStockQuantity(rs.getInt("stock_quantity"));
-        // 修正 setCategory 方法的调用
-        product.setCategory(rs.getString("category"));
+        product.setCategoryId(rs.getInt("category_id"));
+        product.setSubCategoryId(rs.getInt("sub_category_id"));
         product.setImageUrl(rs.getString("image_url"));
         product.setCreatedAt(rs.getTimestamp("created_at"));
         product.setUpdatedAt(rs.getTimestamp("updated_at"));
