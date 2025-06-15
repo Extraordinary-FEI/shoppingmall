@@ -18,7 +18,7 @@ bin/
 logs/
 .idea/
 *.iml
-
+*.class
 ### NetBeans ###
 /nbproject/private/
 /nbbuild/
