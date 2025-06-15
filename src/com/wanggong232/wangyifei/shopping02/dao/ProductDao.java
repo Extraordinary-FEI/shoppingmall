@@ -15,7 +15,12 @@ public class ProductDao {
 
     public List<Product> getAllProducts() {
         List<Product> products = new ArrayList<>();
-        String sql = "SELECT * FROM products ORDER BY product_id, category ASC, name ASC";
+        String sql = "SELECT p.*, c.category_name, sc.sub_category_name " +
+                "FROM products p " +
+                "LEFT JOIN categories c ON p.category_id = c.category_id " +
+                "LEFT JOIN sub_categories sc ON p.sub_category_id = sc.sub_category_id " +
+                "ORDER BY p.category_id ASC, p.name ASC";
+
         try (Connection connection = DBConnectionUtil.getConnection();
              Statement statement = connection.createStatement();
              ResultSet rs = statement.executeQuery(sql)) {
@@ -31,7 +36,13 @@ public class ProductDao {
 
     public List<Product> getProductsByCategory(String category) {
         List<Product> products = new ArrayList<>();
-        String sql = "SELECT * FROM products WHERE category = ? ORDER BY name ASC";
+        String sql = "SELECT p.*, c.category_name, sc.sub_category_name " +
+                "FROM products p " +
+                "LEFT JOIN categories c ON p.category_id = c.category_id " +
+                "LEFT JOIN sub_categories sc ON p.sub_category_id = sc.sub_category_id " +
+                "WHERE c.category_name = ? " +
+                "ORDER BY p.name ASC";
+
         try (Connection connection = DBConnectionUtil.getConnection();
              PreparedStatement preparedStatement = connection.prepareStatement(sql)) {
             preparedStatement.setString(1, category);
@@ -48,12 +59,15 @@ public class ProductDao {
 
     public Set<String> getDistinctCategories() {
         Set<String> categories = new HashSet<>();
-        String sql = "SELECT DISTINCT category FROM products ORDER BY category ASC";
+        String sql = "SELECT DISTINCT c.category_name FROM categories c " +
+                "INNER JOIN products p ON c.category_id = p.category_id " +
+                "ORDER BY c.category_name ASC";
+
         try (Connection connection = DBConnectionUtil.getConnection();
              Statement statement = connection.createStatement();
              ResultSet rs = statement.executeQuery(sql)) {
             while (rs.next()) {
-                categories.add(rs.getString("category"));
+                categories.add(rs.getString("category_name"));
             }
         } catch (SQLException e) {
             e.printStackTrace();
@@ -62,24 +76,30 @@ public class ProductDao {
     }
 
     public Product getProductById(int productId) {
-        String sql = "SELECT * FROM products WHERE product_id = ?";
-        Product product = null;
+        String sql = "SELECT p.*, c.category_name, sc.sub_category_name " +
+                "FROM products p " +
+                "LEFT JOIN categories c ON p.category_id = c.category_id " +
+                "LEFT JOIN sub_categories sc ON p.sub_category_id = sc.sub_category_id " +
+                "WHERE p.product_id = ?";
+
         try (Connection connection = DBConnectionUtil.getConnection();
              PreparedStatement preparedStatement = connection.prepareStatement(sql)) {
             preparedStatement.setInt(1, productId);
             try (ResultSet rs = preparedStatement.executeQuery()) {
                 if (rs.next()) {
-                    product = mapRowToProduct(rs);
+                    return mapRowToProduct(rs);
                 }
             }
         } catch (SQLException e) {
             e.printStackTrace();
         }
-        return product;
+        return null;
     }
 
     public boolean addProduct(Product product) {
-        String sql = "INSERT INTO products (name, description, price, stock_quantity, category, category_id, sub_category_id, image_url, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, NOW(), NOW())";
+        String sql = "INSERT INTO products (name, description, price, stock_quantity, category, category_id, sub_category_id, image_url, created_at, updated_at) " +
+                "VALUES (?, ?, ?, ?, ?, ?, ?, ?, NOW(), NOW())";
+
         try (Connection connection = DBConnectionUtil.getConnection();
              PreparedStatement preparedStatement = connection.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
             preparedStatement.setString(1, product.getName());
@@ -90,6 +110,7 @@ public class ProductDao {
             preparedStatement.setInt(6, product.getCategoryId());
             preparedStatement.setInt(7, product.getSubCategoryId());
             preparedStatement.setString(8, product.getImageUrl());
+
             int affectedRows = preparedStatement.executeUpdate();
             if (affectedRows > 0) {
                 try (ResultSet generatedKeys = preparedStatement.getGeneratedKeys()) {
@@ -125,9 +146,11 @@ public class ProductDao {
         return subCategories;
     }
     // 获取所有大类
+
     public List<Category> getAllCategories() {
         List<Category> categories = new ArrayList<>();
-        String sql = "SELECT * FROM categories";
+        String sql = "SELECT * FROM categories ORDER BY category_name ASC";
+
         try (Connection connection = DBConnectionUtil.getConnection();
              Statement statement = connection.createStatement();
              ResultSet rs = statement.executeQuery(sql)) {
@@ -135,6 +158,8 @@ public class ProductDao {
                 Category category = new Category();
                 category.setCategoryId(rs.getInt("category_id"));
                 category.setCategoryName(rs.getString("category_name"));
+                category.setCreatedAt(rs.getTimestamp("created_at"));
+                category.setUpdatedAt(rs.getTimestamp("updated_at"));
                 categories.add(category);
             }
         } catch (SQLException e) {
@@ -142,7 +167,6 @@ public class ProductDao {
         }
         return categories;
     }
-
     // 新增大类
     public int addCategory(String categoryName) {
         String sql = "INSERT INTO categories (category_name) VALUES (?)";
@@ -209,20 +233,22 @@ public class ProductDao {
 
     public List<SubCategory> getSubCategoriesByCategoryId(int categoryId) {
         List<SubCategory> subCategories = new ArrayList<>();
-        String sql = "SELECT * FROM sub_categories WHERE category_id = ?";
+        String sql = "SELECT sc.*, c.category_name " +
+                "FROM sub_categories sc " +
+                "LEFT JOIN categories c ON sc.category_id = c.category_id " +
+                "WHERE sc.category_id = ? " +
+                "ORDER BY sc.sub_category_name ASC";
+
         try (Connection connection = DBConnectionUtil.getConnection();
              PreparedStatement preparedStatement = connection.prepareStatement(sql)) {
             preparedStatement.setInt(1, categoryId);
             try (ResultSet rs = preparedStatement.executeQuery()) {
                 while (rs.next()) {
-                    Category category = new Category();
-                    category.setCategoryId(categoryId);
-                    String categoryName = getCategoryNameById(categoryId);
-
                     SubCategory subCategory = new SubCategory();
                     subCategory.setSubCategoryId(rs.getInt("sub_category_id"));
-                    subCategory.setCategory(categoryName);
+                    subCategory.setCategoryId(rs.getInt("category_id"));
                     subCategory.setSubCategoryName(rs.getString("sub_category_name"));
+                    subCategory.setCategory(rs.getString("category_name"));
                     subCategory.setCreatedAt(rs.getTimestamp("created_at"));
                     subCategory.setUpdatedAt(rs.getTimestamp("updated_at"));
                     subCategories.add(subCategory);
@@ -233,6 +259,34 @@ public class ProductDao {
         }
         return subCategories;
     }
+
+    public SubCategory getSubCategoryById(int subCategoryId) {
+        String sql = "SELECT sc.*, c.category_name " +
+                "FROM sub_categories sc " +
+                "LEFT JOIN categories c ON sc.category_id = c.category_id " +
+                "WHERE sc.sub_category_id = ?";
+
+        try (Connection connection = DBConnectionUtil.getConnection();
+             PreparedStatement preparedStatement = connection.prepareStatement(sql)) {
+            preparedStatement.setInt(1, subCategoryId);
+            try (ResultSet rs = preparedStatement.executeQuery()) {
+                if (rs.next()) {
+                    SubCategory subCategory = new SubCategory();
+                    subCategory.setSubCategoryId(rs.getInt("sub_category_id"));
+                    subCategory.setCategoryId(rs.getInt("category_id"));
+                    subCategory.setSubCategoryName(rs.getString("sub_category_name"));
+                    subCategory.setCategory(rs.getString("category_name"));
+                    subCategory.setCreatedAt(rs.getTimestamp("created_at"));
+                    subCategory.setUpdatedAt(rs.getTimestamp("updated_at"));
+                    return subCategory;
+                }
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return null;
+    }
+
     private String getCategoryNameById(int categoryId) {
         String sql = "SELECT category_name FROM categories WHERE category_id = ?";
         try (Connection connection = DBConnectionUtil.getConnection();
@@ -249,7 +303,10 @@ public class ProductDao {
         return null;
     }
     public boolean updateProduct(Product product) {
-        String sql = "UPDATE products SET name = ?, description = ?, price = ?, stock_quantity = ?, category = ?, category_id = ?, sub_category_id = ?, image_url = ?, updated_at = NOW() WHERE product_id = ?";
+        String sql = "UPDATE products SET name = ?, description = ?, price = ?, stock_quantity = ?, " +
+                "category = ?, category_id = ?, sub_category_id = ?, image_url = ?, updated_at = NOW() " +
+                "WHERE product_id = ?";
+
         try (Connection connection = DBConnectionUtil.getConnection();
              PreparedStatement preparedStatement = connection.prepareStatement(sql)) {
             preparedStatement.setString(1, product.getName());
@@ -261,6 +318,7 @@ public class ProductDao {
             preparedStatement.setInt(7, product.getSubCategoryId());
             preparedStatement.setString(8, product.getImageUrl());
             preparedStatement.setInt(9, product.getProductId());
+
             return preparedStatement.executeUpdate() > 0;
         } catch (SQLException e) {
             e.printStackTrace();
@@ -283,7 +341,13 @@ public class ProductDao {
     // 修改后的搜索方法 - 在所有商品中搜索（只搜索商品名称和描述）
     public List<Product> searchProducts(String searchTerm) {
         List<Product> products = new ArrayList<>();
-        String sql = "SELECT * FROM products WHERE (name LIKE ? OR description LIKE ?) ORDER BY category ASC, name ASC";
+        String sql = "SELECT p.*, c.category_name, sc.sub_category_name " +
+                "FROM products p " +
+                "LEFT JOIN categories c ON p.category_id = c.category_id " +
+                "LEFT JOIN sub_categories sc ON p.sub_category_id = sc.sub_category_id " +
+                "WHERE (p.name LIKE ? OR p.description LIKE ?) " +
+                "ORDER BY p.category_id ASC, p.name ASC";
+
         try (Connection connection = DBConnectionUtil.getConnection();
              PreparedStatement preparedStatement = connection.prepareStatement(sql)) {
             String likeTerm = "%" + searchTerm + "%";
@@ -300,10 +364,68 @@ public class ProductDao {
         return products;
     }
 
+    public List<Product> searchProductsByCategoryId(String searchTerm, int categoryId) {
+        List<Product> products = new ArrayList<>();
+        String sql = "SELECT p.*, c.category_name, sc.sub_category_name " +
+                "FROM products p " +
+                "LEFT JOIN categories c ON p.category_id = c.category_id " +
+                "LEFT JOIN sub_categories sc ON p.sub_category_id = sc.sub_category_id " +
+                "WHERE (p.name LIKE ? OR p.description LIKE ?) AND p.category_id = ? " +
+                "ORDER BY p.name ASC";
+
+        try (Connection connection = DBConnectionUtil.getConnection();
+             PreparedStatement preparedStatement = connection.prepareStatement(sql)) {
+            String likeTerm = "%" + searchTerm + "%";
+            preparedStatement.setString(1, likeTerm);
+            preparedStatement.setString(2, likeTerm);
+            preparedStatement.setInt(3, categoryId);
+            try (ResultSet rs = preparedStatement.executeQuery()) {
+                while (rs.next()) {
+                    products.add(mapRowToProduct(rs));
+                }
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return products;
+    }
+
+    public List<Product> searchProductsBySubCategory(String searchTerm, int subCategoryId) {
+        List<Product> products = new ArrayList<>();
+        String sql = "SELECT p.*, c.category_name, sc.sub_category_name " +
+                "FROM products p " +
+                "LEFT JOIN categories c ON p.category_id = c.category_id " +
+                "LEFT JOIN sub_categories sc ON p.sub_category_id = sc.sub_category_id " +
+                "WHERE (p.name LIKE ? OR p.description LIKE ?) AND p.sub_category_id = ? " +
+                "ORDER BY p.name ASC";
+
+        try (Connection connection = DBConnectionUtil.getConnection();
+             PreparedStatement preparedStatement = connection.prepareStatement(sql)) {
+            String likeTerm = "%" + searchTerm + "%";
+            preparedStatement.setString(1, likeTerm);
+            preparedStatement.setString(2, likeTerm);
+            preparedStatement.setInt(3, subCategoryId);
+            try (ResultSet rs = preparedStatement.executeQuery()) {
+                while (rs.next()) {
+                    products.add(mapRowToProduct(rs));
+                }
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return products;
+    }
+
     // 新增方法 - 在特定分类中搜索
     public List<Product> searchProductsByCategory(String searchTerm, String category) {
         List<Product> products = new ArrayList<>();
-        String sql = "SELECT * FROM products WHERE (name LIKE ? OR description LIKE ?) AND category = ? ORDER BY name ASC";
+        String sql = "SELECT p.*, c.category_name, sc.sub_category_name " +
+                "FROM products p " +
+                "LEFT JOIN categories c ON p.category_id = c.category_id " +
+                "LEFT JOIN sub_categories sc ON p.sub_category_id = sc.sub_category_id " +
+                "WHERE (p.name LIKE ? OR p.description LIKE ?) AND c.category_name = ? " +
+                "ORDER BY p.name ASC";
+
         try (Connection connection = DBConnectionUtil.getConnection();
              PreparedStatement preparedStatement = connection.prepareStatement(sql)) {
             String likeTerm = "%" + searchTerm + "%";
@@ -342,8 +464,11 @@ public class ProductDao {
         return products;
     }
 
+
     public boolean updateStockQuantity(int productId, int quantityChange) {
-        String sql = "UPDATE products SET stock_quantity = stock_quantity + ?, updated_at = NOW() WHERE product_id = ? AND stock_quantity + ? >= 0";
+        String sql = "UPDATE products SET stock_quantity = stock_quantity + ?, updated_at = NOW() " +
+                "WHERE product_id = ? AND stock_quantity + ? >= 0";
+
         try (Connection connection = DBConnectionUtil.getConnection();
              PreparedStatement preparedStatement = connection.prepareStatement(sql)) {
             preparedStatement.setInt(1, quantityChange);
@@ -357,7 +482,7 @@ public class ProductDao {
     }
 
     public int getTotalProductCount() {
-        String sql = "SELECT COUNT(*) FROM products"; // Assumes all products in the table are considered 'on sale'
+        String sql = "SELECT COUNT(*) FROM products";
         try (Connection connection = DBConnectionUtil.getConnection();
              PreparedStatement preparedStatement = connection.prepareStatement(sql);
              ResultSet rs = preparedStatement.executeQuery()) {
@@ -394,5 +519,54 @@ public class ProductDao {
         product.setCreatedAt(rs.getTimestamp("created_at"));
         product.setUpdatedAt(rs.getTimestamp("updated_at"));
         return product;
+    }
+
+    /**
+     * 根据大分类ID查询商品
+     */
+    public List<Product> getProductsByCategoryId(int categoryId) {
+        List<Product> products = new ArrayList<>();
+        String sql = "SELECT p.*, c.category_name, sc.sub_category_name " +
+                "FROM products p " +
+                "LEFT JOIN categories c ON p.category_id = c.category_id " +
+                "LEFT JOIN sub_categories sc ON p.sub_category_id = sc.sub_category_id " +
+                "WHERE p.category_id = ? " +
+                "ORDER BY p.name ASC";
+
+        try (Connection connection = DBConnectionUtil.getConnection();
+             PreparedStatement preparedStatement = connection.prepareStatement(sql)) {
+            preparedStatement.setInt(1, categoryId);
+            try (ResultSet rs = preparedStatement.executeQuery()) {
+                while (rs.next()) {
+                    products.add(mapRowToProduct(rs));
+                }
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return products;
+    }
+
+    public List<Product> getProductsBySubCategoryId(int subCategoryId) {
+        List<Product> products = new ArrayList<>();
+        String sql = "SELECT p.*, c.category_name, sc.sub_category_name " +
+                "FROM products p " +
+                "LEFT JOIN categories c ON p.category_id = c.category_id " +
+                "LEFT JOIN sub_categories sc ON p.sub_category_id = sc.sub_category_id " +
+                "WHERE p.sub_category_id = ? " +
+                "ORDER BY p.name ASC";
+
+        try (Connection connection = DBConnectionUtil.getConnection();
+             PreparedStatement preparedStatement = connection.prepareStatement(sql)) {
+            preparedStatement.setInt(1, subCategoryId);
+            try (ResultSet rs = preparedStatement.executeQuery()) {
+                while (rs.next()) {
+                    products.add(mapRowToProduct(rs));
+                }
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return products;
     }
 }
