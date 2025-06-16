@@ -159,7 +159,8 @@
         <header class="admin-header">
             <h1>仪表盘</h1>
             <div class="user-info">
-                <span>管理员: ${sessionScope.currentUser.username} | <a href="${pageContext.request.contextPath}/login?action=logout">退出</a></span>
+                <span>管理员: <a href="${pageContext.request.contextPath}/user_profile"><%= session.getAttribute("username") %></a></span>
+                <a href="logout?action=logout">退出登录</a>
             </div>
         </header>
 

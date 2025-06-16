@@ -58,8 +58,8 @@
             <li class="cart-info"><a href="${pageContext.request.contextPath}/cart">购物车 (<span id="cartItemCount">${empty sessionScope.cart.items ? 0 : sessionScope.cart.totalItems}</span>)</a></li>
             <c:choose>
                 <c:when test="${not empty sessionScope.currentUser}">
-                    <li><a href="#">欢迎, ${sessionScope.currentUser.username}!</a></li>
-                    <li><a href="${pageContext.request.contextPath}/login?action=logout">退出登录</a></li>
+                        <span>欢迎，<a href="${pageContext.request.contextPath}/user_profile"><%= session.getAttribute("username") %></a>！</span>
+                        <a href="login?action=logout">退出登录</a>
                 </c:when>
                 <c:otherwise>
                     <li><a href="${pageContext.request.contextPath}/user/login.jsp">登录</a></li>
