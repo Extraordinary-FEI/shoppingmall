@@ -2,13 +2,11 @@ package com.wanggong232.wangyifei.shopping02.dao;
 
 import com.wanggong232.wangyifei.shopping02.model.User;
 import com.wanggong232.wangyifei.shopping02.util.DBConnectionUtil;
-
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
-import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -27,6 +25,7 @@ public class UserDao {
     private static final String COLUMN_AVATAR_PATH = "avatar_path";
     private static final String COLUMN_CREATED_AT = "created_at";
     private static final String COLUMN_UPDATED_AT = "updated_at";
+    private static final String COLUMN_BALANCE = "balance";
 
     public User getUserByUsername(String username) {
         String sql = "SELECT * FROM " + TABLE_NAME + " WHERE " + COLUMN_USERNAME + " = ?";
@@ -188,6 +187,19 @@ public class UserDao {
             e.printStackTrace();
         }
         return 0;
+    }
+    public boolean updateUserBalance(int userId, java.math.BigDecimal newBalance) {
+        String sql = "UPDATE " + TABLE_NAME + " SET " + COLUMN_BALANCE + " = ?, " + COLUMN_UPDATED_AT + " = CURRENT_TIMESTAMP WHERE " + COLUMN_USER_ID + " = ?";
+        try (Connection connection = DBConnectionUtil.getConnection();
+             PreparedStatement preparedStatement = connection.prepareStatement(sql)) {
+            preparedStatement.setBigDecimal(1, newBalance);
+            preparedStatement.setInt(2, userId);
+            return preparedStatement.executeUpdate() > 0;
+        } catch (SQLException e) {
+            System.err.println("Error updating balance for user: " + userId);
+            e.printStackTrace();
+            return false;
+        }
     }
 
     private User mapRowToUser(ResultSet rs) throws SQLException {

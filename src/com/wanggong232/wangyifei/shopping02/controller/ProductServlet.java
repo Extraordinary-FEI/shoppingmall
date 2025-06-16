@@ -33,7 +33,7 @@ public class ProductServlet extends HttpServlet {
 
         // 获取请求参数
         String categoryIdStr = request.getParameter("categoryId");
-        String subCategoryIdStr = request.getParameter("subCategoryId");
+        String subCategoryIdStr = request.getParameter("subCategory");
         String category = request.getParameter("category"); // 保持向后兼容
         String searchQuery = request.getParameter("search");
 

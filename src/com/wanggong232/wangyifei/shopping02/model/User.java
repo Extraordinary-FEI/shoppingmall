@@ -1,5 +1,6 @@
 package com.wanggong232.wangyifei.shopping02.model;
 
+import java.math.BigDecimal;
 import java.sql.Timestamp;
 
 public class User {
@@ -12,6 +13,7 @@ public class User {
     private String phone;
     private String avatarPath;
     private String role; // e.g., "USER", "ADMIN"
+    private BigDecimal balance; // 用户账户余额
     private Timestamp createdAt;
     private Timestamp updatedAt;
 
@@ -100,6 +102,14 @@ public class User {
 
     public void setRole(String role) {
         this.role = role;
+    }
+
+    public BigDecimal getBalance() {
+        return balance;
+    }
+
+    public void setBalance(BigDecimal balance) {
+        this.balance = balance;
     }
 
     public Timestamp getCreatedAt() {
