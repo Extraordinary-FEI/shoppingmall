@@ -43,13 +43,23 @@ public class RechargeAccountServlet extends HttpServlet {
             // 验证充值金额
             if (rechargeAmount.compareTo(BigDecimal.ZERO) <= 0) {
                 request.setAttribute("rechargeErrorMessage", "充值金额必须大于0！");
-                request.getRequestDispatcher("/user/profile.jsp#rechargeAccount").forward(request, response);
+                // 根据用户角色跳转到不同的页面
+                if ("ADMIN".equals(currentUser.getRole())) {
+                    request.getRequestDispatcher("/admin/profile.jsp#rechargeAccount").forward(request, response);
+                } else {
+                    request.getRequestDispatcher("/user/user_profile.jsp#rechargeAccount").forward(request, response);
+                }
                 return;
             }
 
             if (rechargeAmount.compareTo(new BigDecimal("10000")) > 0) {
                 request.setAttribute("rechargeErrorMessage", "单次充值金额不能超过10000元！");
-                request.getRequestDispatcher("/user/profile.jsp#rechargeAccount").forward(request, response);
+                // 根据用户角色跳转到不同的页面
+                if ("ADMIN".equals(currentUser.getRole())) {
+                    request.getRequestDispatcher("/admin/profile.jsp#rechargeAccount").forward(request, response);
+                } else {
+                    request.getRequestDispatcher("/user/user_profile.jsp#rechargeAccount").forward(request, response);
+                }
                 return;
             }
 
@@ -77,7 +87,12 @@ public class RechargeAccountServlet extends HttpServlet {
             request.setAttribute("rechargeErrorMessage", "充值过程中发生错误，请稍后重试！");
         }
 
-        request.getRequestDispatcher("/user/profile.jsp#rechargeAccount").forward(request, response);
+        // 根据用户角色跳转到不同的页面
+        if ("ADMIN".equals(currentUser.getRole())) {
+            request.getRequestDispatcher("/admin/profile.jsp#rechargeAccount").forward(request, response);
+        } else {
+            request.getRequestDispatcher("/user/user_profile.jsp#rechargeAccount").forward(request, response);
+        }
     }
 }
 

@@ -158,7 +158,7 @@
         <li class="cart-info"><a href="${pageContext.request.contextPath}/cart">购物车 (<span id="cartItemCount">${empty sessionScope.cart ? 0 : sessionScope.cart.totalItems}</span>)</a></li>
         <c:choose>
             <c:when test="${not empty sessionScope.currentUser}">
-                <li><a href="${pageContext.request.contextPath}/user/profile.jsp" class="active">欢迎, ${sessionScope.currentUser.username}!</a></li>
+                <li><a href="${pageContext.request.contextPath}/user_profile" class="active">欢迎, ${sessionScope.currentUser.username}!</a></li>
                 <li><a href="${pageContext.request.contextPath}/login?action=logout">退出登录</a></li>
             </c:when>
             <c:otherwise>
@@ -174,7 +174,7 @@
         <div class="profile-sidebar">
             <ul>
                 <li><a href="#" id="personalInfoLink" class="active"><span class="icon">👤</span> 个人信息</a></li>
-                <li><a href="${pageContext.request.contextPath}/cart.jsp"><span class="icon">📦</span> 我的订单</a></li>
+                <li><a href="${pageContext.request.contextPath}/cart"><span class="icon">📦</span> 我的订单</a></li>
                 <li><a href="#" id="changePasswordLink"><span class="icon">🔒</span> 修改密码</a></li>
                 <li><a href="#" id="rechargeAccountLink"><span class="icon">💰</span> 账户充值</a></li>
                 <li><a href="${pageContext.request.contextPath}/login?action=logout"><span class="icon">🚪</span> 退出系统</a></li>

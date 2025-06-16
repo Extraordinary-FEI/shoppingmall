@@ -295,8 +295,8 @@
 
         <c:choose>
             <c:when test="${not empty sessionScope.currentUser}">
-                    <span>欢迎，<a href="${pageContext.request.contextPath}/user_profile.jsp"><%= session.getAttribute("username") %></a>！</span>
-                    <a href="login?action=logout">退出登录</a></div>
+                <span>欢迎，<a href="<c:choose><c:when test="${sessionScope.currentUser.role == 'ADMIN'}">${pageContext.request.contextPath}/admin/profile.jsp</c:when><c:otherwise>${pageContext.request.contextPath}/user_profile</c:otherwise></c:choose>"><%= session.getAttribute("username") %></a>！</span>
+                <a href="login?action=logout">退出登录</a>
             </c:when>
             <c:otherwise>
                 <li><a href="${pageContext.request.contextPath}/user/login.jsp">登录</a></li>

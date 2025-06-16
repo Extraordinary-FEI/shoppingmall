@@ -238,7 +238,7 @@ public class AdminProductServlet extends HttpServlet {
         product.setSubCategoryId(subCategoryId);
 
         Part filePart = request.getPart("imageFile");
-        String uploadedFilePath = null;
+    String uploadedFilePath = null;
         if (filePart != null && filePart.getSize() > 0) {
             try {
                 uploadedFilePath = uploadFile(request, filePart);

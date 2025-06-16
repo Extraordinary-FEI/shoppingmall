@@ -215,6 +215,7 @@ public class UserDao {
         user.setAvatarPath(rs.getString(COLUMN_AVATAR_PATH));
         user.setCreatedAt(rs.getTimestamp(COLUMN_CREATED_AT));
         user.setUpdatedAt(rs.getTimestamp(COLUMN_UPDATED_AT));
+        user.setBalance(rs.getBigDecimal(COLUMN_BALANCE));
         return user;
     }
 }

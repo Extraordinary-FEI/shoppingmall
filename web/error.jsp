@@ -13,12 +13,12 @@
     </style>
 </head>
 <body>
-    <div class="container">
-        <h1>应用程序错误</h1>
-        <p>抱歉，处理您的请求时遇到了一个意外错误。</p>
-        <p>错误详情：${requestScope["jakarta.servlet.error.message"]}</p>
-        <p>请尝试返回<a href="javascript:history.back()">上一页</a>或联系管理员。</p>
-        <p><small>如果您是管理员，请检查服务器日志以获取更多详细信息。</small></p>
-    </div>
+<div class="container">
+    <h1>应用程序错误</h1>
+    <p>抱歉，处理您的请求时遇到了一个意外错误。</p>
+    <p>错误详情：${requestScope["jakarta.servlet.error.message"]}</p>
+    <p>请尝试返回<a href="javascript:history.back()">上一页</a>或联系管理员。</p>
+    <p><small>如果您是管理员，请检查服务器日志以获取更多详细信息。</small></p>
+</div>
 </body>
 </html>

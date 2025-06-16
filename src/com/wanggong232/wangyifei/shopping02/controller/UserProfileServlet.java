@@ -31,7 +31,7 @@ public class UserProfileServlet extends HttpServlet {
                 return;
             }
 
-            request.getRequestDispatcher("/user_profile.jsp").forward(request, response);
+            request.getRequestDispatcher("/user/user_profile.jsp").forward(request, response);
         } catch (Exception e) {
             e.printStackTrace();
             request.setAttribute("errorMessage", "访问个人信息页面时发生错误，请联系管理员。");

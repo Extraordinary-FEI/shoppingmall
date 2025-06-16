@@ -1,11 +1,5 @@
 <%@ page contentType="text/html;charset=UTF-8" language="java" %>
 <%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
-
-<%-- Redirect to login if not admin --%>
-<c:if test="${empty sessionScope.currentUser || sessionScope.currentUser.role ne 'ADMIN'}">
-    <c:redirect url="${pageContext.request.contextPath}/user/login.jsp?error=AdminAccessRequired"/>
-</c:if>
-
 <!DOCTYPE html>
 <html lang="zh-CN">
 <head>
@@ -17,79 +11,55 @@
         body {
             display: flex;
             min-height: 100vh;
-            background-color: #121212;
+            flex-direction: column;
         }
-        .sidebar {
-            width: 260px;
-            background-color: #1e1e1e;
-            color: #e0e0e0;
+        .main-content {
+            display: flex;
+            flex: 1;
             padding: 20px;
-            height: 100vh;
-            position: fixed;
-            top: 0;
-            left: 0;
-            overflow-y: auto;
-            box-shadow: 2px 0 5px rgba(0,0,0,0.5);
+            gap: 20px;
+            max-width: 1200px;
+            margin: 20px auto;
+            background-color: #1e1e1e;
+            border-radius: 12px;
+            box-shadow: 0 8px 30px rgba(0,0,0,0.5);
         }
-        .sidebar h2 {
-            text-align: center;
-            margin-bottom: 30px;
-            font-size: 1.8em;
-            color: #c792ea;
-            border-bottom: 1px solid #444;
-            padding-bottom: 15px;
+        .profile-sidebar {
+            width: 250px;
+            background-color: #2c2c2c;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.3);
         }
-        .sidebar ul {
+        .profile-sidebar ul {
             list-style-type: none;
             padding: 0;
             margin: 0;
         }
-        .sidebar ul li a {
-            color: #b0b0b0;
-            text-decoration: none;
+        .profile-sidebar ul li a {
+            display: flex;
+            align-items: center;
             padding: 15px 20px;
-            display: block;
-            border-radius: 6px;
+            color: #e0e0e0;
+            text-decoration: none;
+            border-radius: 8px;
             margin-bottom: 10px;
             transition: background-color 0.3s ease, color 0.3s ease, transform 0.2s ease;
+            font-size: 1.1em;
         }
-        .sidebar ul li a:hover,
-        .sidebar ul li a.active {
+        .profile-sidebar ul li a .icon {
+            margin-right: 12px;
+            font-size: 1.3em;
+        }
+        .profile-sidebar ul li a:hover,
+        .profile-sidebar ul li a.active {
             background-color: #c792ea;
             color: #1e1e1e;
             transform: translateX(5px);
         }
-        .main-content {
-            margin-left: 260px;
-            padding: 30px;
-            width: calc(100% - 260px);
-            background-color: #121212;
-        }
-        .admin-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 20px;
-            background-color: #1e1e1e;
-            border-radius: 8px;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.3);
-            margin-bottom: 30px;
-        }
-        .admin-header h1 {
-            margin: 0;
-            font-size: 2em;
-            color: #c792ea;
-        }
-        .admin-header .user-info a {
-            color: #c792ea;
-            text-decoration: none;
-            font-weight: bold;
-        }
-        .admin-header .user-info a:hover {
-            text-decoration: underline;
-        }
         .profile-content {
-            background-color: #1e1e1e;
+            flex: 1;
+            background-color: #2c2c2c;
             padding: 30px;
             border-radius: 10px;
             box-shadow: 0 4px 15px rgba(0,0,0,0.3);
@@ -166,139 +136,190 @@
             border: 1px solid #e74c3c;
             text-align: center;
         }
-        .admin-stats {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 20px;
-            margin-bottom: 30px;
-        }
-        .stat-card {
-            background: linear-gradient(145deg, #8e44ad, #5e3370);
-            color: white;
-            padding: 20px;
-            border-radius: 10px;
-            text-align: center;
-            box-shadow: 0 5px 15px rgba(0,0,0,0.3);
-        }
-        .stat-card h3 {
-            margin: 0 0 10px 0;
-            font-size: 2.5em;
-        }
-        .stat-card p {
-            margin: 0;
-            font-size: 1.1em;
-        }
         @media (max-width: 768px) {
-            .sidebar {
-                width: 100%;
-                height: auto;
-                position: relative;
-            }
             .main-content {
-                margin-left: 0;
+                flex-direction: column;
+                padding: 10px;
+            }
+            .profile-sidebar {
                 width: 100%;
                 padding: 15px;
+            }
+            .profile-content {
+                padding: 20px;
             }
         }
     </style>
 </head>
 <body>
-<div class="sidebar">
-    <h2>炫酷商城后台</h2>
+<nav>
     <ul>
-        <li><a href="${pageContext.request.contextPath}/admin/dashboard">&#128200; 仪表盘</a></li>
-        <li><a href="${pageContext.request.contextPath}/admin/users">&#128101; 用户管理</a></li>
-        <li><a href="${pageContext.request.contextPath}/admin/products">&#128722; 商品管理</a></li>
-        <li><a href="${pageContext.request.contextPath}/admin/orders">&#128230; 订单管理</a></li>
-        <li><a href="${pageContext.request.contextPath}/admin/profile.jsp" class="active">&#128100; 个人中心</a></li>
-        <li><a href="${pageContext.request.contextPath}/login?action=logout">&#128682; 退出登录</a></li>
+        <li><a href="${pageContext.request.contextPath}/admin/dashboard">管理后台</a></li>
+        <li><a href="${pageContext.request.contextPath}/admin/users">用户管理</a></li>
+        <li><a href="${pageContext.request.contextPath}/admin/products">商品管理</a></li>
+        <li><a href="${pageContext.request.contextPath}/admin/orders">订单管理</a></li>
+        <c:choose>
+            <c:when test="${not empty sessionScope.currentUser}">
+                <li><a href="${pageContext.request.contextPath}/admin/profile.jsp" class="active">欢迎, ${sessionScope.currentUser.username}!</a></li>
+                <li><a href="${pageContext.request.contextPath}/login?action=logout">退出登录</a></li>
+            </c:when>
+            <c:otherwise>
+                <li><a href="${pageContext.request.contextPath}/user/login.jsp">登录</a></li>
+            </c:otherwise>
+        </c:choose>
     </ul>
-</div>
+</nav>
 
-<div class="main-content fade-in">
-    <header class="admin-header">
-        <h1>管理员个人中心</h1>
-        <div class="user-info">
-            <span>管理员: <a href="${pageContext.request.contextPath}/admin/profile.jsp">${sessionScope.currentUser.username}</a> | <a href="${pageContext.request.contextPath}/login?action=logout">退出</a></span>
+<div class="container fade-in">
+    <div class="main-content">
+        <div class="profile-sidebar">
+            <ul>
+                <li><a href="#" id="personalInfoLink" class="active"><span class="icon">👤</span> 个人信息</a></li>
+                <li><a href="${pageContext.request.contextPath}/admin/dashboard"><span class="icon">📊</span> 管理后台</a></li>
+                <li><a href="#" id="changePasswordLink"><span class="icon">🔒</span> 修改密码</a></li>
+                <li><a href="#" id="rechargeAccountLink"><span class="icon">💰</span> 账户充值</a></li>
+                <li><a href="${pageContext.request.contextPath}/login?action=logout"><span class="icon">🚪</span> 退出系统</a></li>
+            </ul>
         </div>
-    </header>
 
-    <div class="profile-content">
-        <div id="personalInfoSection">
-            <h2>个人信息</h2>
-            <c:if test="${not empty successMessage}">
-                <p class="message-success">${successMessage}</p>
-            </c:if>
-            <c:if test="${not empty errorMessage}">
-                <p class="message-error">${errorMessage}</p>
-            </c:if>
-
-            <div class="admin-stats">
-                <div class="stat-card">
-                    <h3>${requestScope.totalUsers != null ? requestScope.totalUsers : 0}</h3>
-                    <p>管理用户数</p>
-                </div>
-                <div class="stat-card">
-                    <h3>${requestScope.totalProducts != null ? requestScope.totalProducts : 0}</h3>
-                    <p>管理商品数</p>
-                </div>
-                <div class="stat-card">
-                    <h3>${requestScope.pendingOrders != null ? requestScope.pendingOrders : 0}</h3>
-                    <p>待处理订单</p>
-                </div>
+        <div class="profile-content">
+            <div id="personalInfoSection">
+                <h2>管理员个人信息</h2>
+                <c:if test="${not empty successMessage}">
+                    <p class="message-success">${successMessage}</p>
+                </c:if>
+                <c:if test="${not empty errorMessage}">
+                    <p class="message-error">${errorMessage}</p>
+                </c:if>
+                <form action="${pageContext.request.contextPath}/updateProfile" method="post">
+                    <div class="form-group">
+                        <label for="username">用户名:</label>
+                        <input type="text" id="username" name="username" value="${sessionScope.currentUser.username}" readonly>
+                    </div>
+                    <div class="form-group">
+                        <label for="email">Email:</label>
+                        <input type="email" id="email" name="email" value="${sessionScope.currentUser.email}">
+                    </div>
+                    <div class="form-group">
+                        <label for="fullName">真实姓名:</label>
+                        <input type="text" id="fullName" name="fullName" value="${sessionScope.currentUser.fullName}">
+                    </div>
+                    <div class="form-group">
+                        <label for="phone">手机号码:</label>
+                        <input type="text" id="phone" name="phone" value="${sessionScope.currentUser.phone}">
+                    </div>
+                    <div class="form-group">
+                        <label for="address">联系地址:</label>
+                        <textarea id="address" name="address" rows="3">${sessionScope.currentUser.address}</textarea>
+                    </div>
+                    <button type="submit">保存</button>
+                </form>
             </div>
 
-            <form action="${pageContext.request.contextPath}/updateAdminProfile" method="post">
-                <div class="form-group">
-                    <label for="username">管理员账号:</label>
-                    <input type="text" id="username" name="username" value="${sessionScope.currentUser.username}" readonly>
-                </div>
-                <div class="form-group">
-                    <label for="email">Email:</label>
-                    <input type="email" id="email" name="email" value="${sessionScope.currentUser.email}">
-                </div>
-                <div class="form-group">
-                    <label for="fullName">真实姓名:</label>
-                    <input type="text" id="fullName" name="fullName" value="${sessionScope.currentUser.fullName}">
-                </div>
-                <div class="form-group">
-                    <label for="phone">联系电话:</label>
-                    <input type="text" id="phone" name="phone" value="${sessionScope.currentUser.phone}">
-                </div>
-                <div class="form-group">
-                    <label for="address">办公地址:</label>
-                    <textarea id="address" name="address" rows="3">${sessionScope.currentUser.address}</textarea>
-                </div>
-                <button type="submit">保存信息</button>
-            </form>
+            <div id="changePasswordSection" style="display: none;">
+                <h2>修改密码</h2>
+                <c:if test="${not empty passwordSuccessMessage}">
+                    <p class="message-success">${passwordSuccessMessage}</p>
+                </c:if>
+                <c:if test="${not empty passwordErrorMessage}">
+                    <p class="message-error">${passwordErrorMessage}</p>
+                </c:if>
+                <form action="${pageContext.request.contextPath}/changePassword" method="post">
+                    <div class="form-group">
+                        <label for="currentPassword">当前密码:</label>
+                        <input type="password" id="currentPassword" name="currentPassword" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="newPassword">新密码:</label>
+                        <input type="password" id="newPassword" name="newPassword" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="confirmNewPassword">确认新密码:</label>
+                        <input type="password" id="confirmNewPassword" name="confirmNewPassword" required>
+                    </div>
+                    <button type="submit">修改密码</button>
+                </form>
+            </div>
 
-            <hr style="margin: 40px 0; border: 1px solid #444;">
-
-            <h2>修改密码</h2>
-            <c:if test="${not empty passwordSuccessMessage}">
-                <p class="message-success">${passwordSuccessMessage}</p>
-            </c:if>
-            <c:if test="${not empty passwordErrorMessage}">
-                <p class="message-error">${passwordErrorMessage}</p>
-            </c:if>
-            <form action="${pageContext.request.contextPath}/changeAdminPassword" method="post">
-                <div class="form-group">
-                    <label for="currentPassword">当前密码:</label>
-                    <input type="password" id="currentPassword" name="currentPassword" required>
-                </div>
-                <div class="form-group">
-                    <label for="newPassword">新密码:</label>
-                    <input type="password" id="newPassword" name="newPassword" required>
-                </div>
-                <div class="form-group">
-                    <label for="confirmNewPassword">确认新密码:</label>
-                    <input type="password" id="confirmNewPassword" name="confirmNewPassword" required>
-                </div>
-                <button type="submit">修改密码</button>
-            </form>
+            <div id="rechargeAccountSection" style="display: none;">
+                <h2>账户充值</h2>
+                <c:if test="${not empty rechargeSuccessMessage}">
+                    <p class="message-success">${rechargeSuccessMessage}</p>
+                </c:if>
+                <c:if test="${not empty rechargeErrorMessage}">
+                    <p class="message-error">${rechargeErrorMessage}</p>
+                </c:if>
+                <p>当前账户余额: <span style="color: #c792ea; font-weight: bold;">${sessionScope.currentUser.balance != null ? sessionScope.currentUser.balance : 0.00}</span> 元</p>
+                <form action="${pageContext.request.contextPath}/rechargeAccount" method="post">
+                    <div class="form-group">
+                        <label for="rechargeAmount">充值金额:</label>
+                        <input type="number" id="rechargeAmount" name="rechargeAmount" min="1" step="0.01" required>
+                    </div>
+                    <button type="submit">立即充值</button>
+                </form>
+            </div>
         </div>
     </div>
 </div>
+
+<footer>
+    <p>&copy; 2025 炫酷商城. 版权所有.</p>
+</footer>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const personalInfoLink = document.getElementById('personalInfoLink');
+        const changePasswordLink = document.getElementById('changePasswordLink');
+        const rechargeAccountLink = document.getElementById('rechargeAccountLink');
+
+        const personalInfoSection = document.getElementById('personalInfoSection');
+        const changePasswordSection = document.getElementById('changePasswordSection');
+        const rechargeAccountSection = document.getElementById('rechargeAccountSection');
+
+        function showSection(sectionToShow) {
+            personalInfoSection.style.display = 'none';
+            changePasswordSection.style.display = 'none';
+            rechargeAccountSection.style.display = 'none';
+
+            personalInfoLink.classList.remove('active');
+            changePasswordLink.classList.remove('active');
+            rechargeAccountLink.classList.remove('active');
+
+            sectionToShow.style.display = 'block';
+        }
+
+        personalInfoLink.addEventListener('click', function(e) {
+            e.preventDefault();
+            showSection(personalInfoSection);
+            personalInfoLink.classList.add('active');
+        });
+
+        changePasswordLink.addEventListener('click', function(e) {
+            e.preventDefault();
+            showSection(changePasswordSection);
+            changePasswordLink.classList.add('active');
+        });
+
+        rechargeAccountLink.addEventListener('click', function(e) {
+            e.preventDefault();
+            showSection(rechargeAccountSection);
+            rechargeAccountLink.classList.add('active');
+        });
+
+        // Initial display based on URL hash or default to personal info
+        const hash = window.location.hash;
+        if (hash === '#changePassword') {
+            showSection(changePasswordSection);
+            changePasswordLink.classList.add('active');
+        } else if (hash === '#rechargeAccount') {
+            showSection(rechargeAccountSection);
+            rechargeAccountLink.classList.add('active');
+        } else {
+            showSection(personalInfoSection);
+            personalInfoLink.classList.add('active');
+        }
+    });
+</script>
 </body>
 </html>
 
